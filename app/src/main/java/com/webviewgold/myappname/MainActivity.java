@@ -151,19 +151,14 @@ import static com.webviewgold.myappname.Config.HIDE_NAVIGATION_BAR_IN_LANDSCAPE;
 import static com.webviewgold.myappname.Config.HIDE_VERTICAL_SCROLLBAR;
 import static com.webviewgold.myappname.Config.INCREMENT_WITH_REDIRECTS;
 import static com.webviewgold.myappname.Config.MAX_TEXT_ZOOM;
-import static com.webviewgold.myappname.Config.PREVENT_SLEEP;
 import static com.webviewgold.myappname.Config.REMAIN_SPLASH_OPTION;
 import static com.webviewgold.myappname.Config.SPECIAL_LINK_HANDLING_OPTIONS;
-import static com.webviewgold.myappname.Config.SPLASH_SCREEN_ACTIVATED;
 import static com.webviewgold.myappname.Config.downloadableExtension;
-import static com.webviewgold.myappname.WebViewApp.context;
 
 import com.webviewgold.myappname.R;
 public class MainActivity extends AppCompatActivity {
 
-    public static boolean HIDE_ADS_FOR_PURCHASE = false;
-    public static final int PERMISSION_REQUEST_CODE = 9541;
-    public static final String ERROR_DETECTED = "No NFC tag detected!";
+
     public static final String WRITE_SUCCESS = "Text written to the NFC tag successfully!";
     public static final String WRITE_ERROR = "Error during writing, is the NFC tag close enough to your device?";
 
@@ -172,7 +167,6 @@ public class MainActivity extends AppCompatActivity {
     private CustomWebView webView;
     private WebView mWebviewPop;
     private SharedPreferences preferences;
-    private SharedPreferences preferencesColor;
     private RelativeLayout mContainer;
     private RelativeLayout windowContainer;
 
@@ -182,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
     public static final int REQUEST_CODE_QR_SCAN = 1234;
 
     SwipeRefreshLayout mySwipeRefreshLayout;
-    public static final int MULTIPLE_PERMISSIONS = 10;
     public ProgressBar progressBar;
     private String deepLinkingURL;
     int mCount = -1;
@@ -194,40 +187,29 @@ public class MainActivity extends AppCompatActivity {
     private final static int FCR = 1;
     public String hostpart;
     private boolean isConsumable = false;
-    private String successUrl = "", failUrl = "";
     private boolean offlineFileLoaded = false;
     private boolean isNotificationURL = false;
     private boolean extendediap = true;
     public String uuid = "";
     public static Context mContext;
-    private String firebaseUserToken = "";
     private boolean isRedirected = false;
-    private boolean notificationPromptShown = false;
 
 
     static long TimeStamp = 0;
-    static boolean isInBackGround = false;
     private static boolean connectedNow = false;
 
-    // NFC
-    private NfcAdapter nfcAdapter;
-    private PendingIntent pendingIntent;
-    private IntentFilter writeTagFilters[];
+
     private Tag myTag;
     private boolean NFCenabled = false;
     private boolean readModeNFC = false;
     private boolean writeModeNFC = false;
     private String textToWriteNFC = "";
-    private boolean SPLASH_SCREEN_ACTIVE = false;
-    // Social media login user agents
     public static final String USER_AGENT_GOOGLE = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.101 Mobile Safari/537.36";
     public static final String USER_AGENT_FB = "Mozilla/5.0 (Linux; U; Android 2.2) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1";
 
     // Manual Cookie Sync
     private final Handler cookieSyncHandler = new Handler();
     private Runnable cookieSyncRunnable;
-    private boolean onResumeCalled = false;
-    private boolean cookieSyncOn = false;
 
     // Scanning Mode
     private boolean scanningModeOn = false;
@@ -240,50 +222,11 @@ public class MainActivity extends AppCompatActivity {
         mContext = this;
         uuid = Settings.System.getString(super.getContentResolver(), Settings.Secure.ANDROID_ID);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        preferencesColor = PreferenceManager.getDefaultSharedPreferences(this);
 
-        onResumeCalled = false;
-
-
-
-
-        if(DISABLE_DARK_MODE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (Config.blackStatusBarText) {
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            }
-        }
-        if (PREVENT_SLEEP) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        } else {
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
         super.onCreate(savedInstanceState);
-        if (SPLASH_SCREEN_ACTIVATED) {
-            SPLASH_SCREEN_ACTIVE = true;
-            startActivity(new Intent(getApplicationContext(), SplashScreen.class));
-        }
-
-        // Support the cut out background when in landscape mode
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            getWindow().getAttributes().layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-            Bitmap bitmap = Bitmap.createBitmap(24, 24, Bitmap.Config.ARGB_8888);
-            bitmap.eraseColor(getResources().getColor(R.color.colorPrimaryDark));
-            BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), bitmap);
-            getWindow().setBackgroundDrawable(bitmapDrawable);
-        }
-
         setContentView(R.layout.activity_main);
 
 
-
-
-
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
 
 
         Intent intent = getIntent();
@@ -619,7 +562,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public static boolean webIsLoaded = false;
 
     private void checkInternetConnection() {
         //auto reload every 5s
@@ -663,90 +605,9 @@ public class MainActivity extends AppCompatActivity {
         //timer.cancel();
     }
 
-    public static void setAutoOrientationEnabled(Context context, boolean enabled) {
-        Settings.System.putInt(context.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION, enabled ? 1 : 0);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            Log.i(TAG, "Landscape Mode");
-            // Remove the status bar
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            // Remove the navigation bar
-            if (HIDE_NAVIGATION_BAR_IN_LANDSCAPE) {
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-            }
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            Log.i(TAG, "Portrait Mode");
-            // Return the status bar and navigation bar
-            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        webView.saveState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        webView.restoreState(savedInstanceState);
-    }
 
 
-    public void statusCheck() {
-        final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            buildAlertMessageNoGps();
-        }
-    }
-
-    private void buildAlertMessageNoGps() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.cancel();
-                    }
-                });
-        final AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    private void buildAlertMessageNoNotification() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Your notifications are off, do you want to enable it?")
-                .setCancelable(false)
-                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        if(intent.resolveActivity(context.getPackageManager()) != null){
-                            startActivity(intent);
-                        }else{
-                            Log.e(TAG, " No Activity found to handle ACTION_APPLICATION_DETAILS_SETTINGS intent.");
-                        }
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(final DialogInterface dialog, final int id) {
-                        dialog.cancel();
-                    }
-                });
-        final AlertDialog alert = builder.create();
-        alert.show();
-    }
 
     private void loadLocal(String path) {
         webView.loadUrl(path);
@@ -985,7 +846,7 @@ public class MainActivity extends AppCompatActivity {
             if (EXIT_APP_DIALOG) {
 //                ExitDialog();
             } else {
-//                super.onBackPressed();
+                super.onBackPressed();
             }
         } else if (webView.canGoBack()) {
             webView.goBack();
@@ -993,7 +854,7 @@ public class MainActivity extends AppCompatActivity {
             if (EXIT_APP_DIALOG) {
 //                ExitDialog();
             } else {
-//                super.onBackPressed();
+                super.onBackPressed();
             }
         }
     }
@@ -1043,87 +904,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openDownloadedFile(File file) {
-
-        Uri uri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".provider", file);
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(uri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-        Intent chooser = Intent.createChooser(intent, "App");
-
-        try {
-            startActivity(chooser);
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, getResources().getString(R.string.download_noapp), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
-        }
-
-        //  /*
-        //  MimeTypeMap map = MimeTypeMap.getSingleton();
-        //   String ext = MimeTypeMap.getFileExtensionFromUrl(file.getName());
-        //   String type = map.getMimeTypeFromExtension(ext);
-
-        //  if (type == null)
-        //     type = "*/*";
-
-        //Show all apps, if do not want to do uncomment this line:
-        //S type = "*/*";
-        //S   Intent intent = new Intent(Intent.ACTION_CHOOSER);
-        //S Uri data = Uri.fromFile(file);
-        //S    Uri data = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".provider", file);
-
-        //S  intent.setData(data);
-
-        //S  startActivity(intent);
-        //S   */
-    }
-
-    private void openDownloadedAttachment(final Context context, final long downloadId) {
-        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        DownloadManager.Query query = new DownloadManager.Query();
-        query.setFilterById(downloadId);
-        Cursor cursor = downloadManager.query(query);
-
-        if (cursor.moveToFirst()) {
-            int downloadStatus = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-            String downloadLocalUri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-            String downloadMimeType = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
-
-            if ((downloadStatus == DownloadManager.STATUS_SUCCESSFUL) && downloadLocalUri != null) {
-                Log.d("texts", "Download done");
-                Toast.makeText(context, "Saved to SD card", Toast.LENGTH_LONG).show();
-                openDownloadedAttachment(context, Uri.parse(downloadLocalUri), downloadMimeType);
-
-
-            }
-        }
-        cursor.close();
-    }
 
     private void openDownloadedAttachment(Context context, Uri parse, String downloadMimeType) {
     }
 
-    private void downloadImageNew(String filename, String downloadUrlOfImage) {
-        try {
-            DownloadManager dm = (DownloadManager) getSystemService(this.DOWNLOAD_SERVICE);
-            Uri downloadUri = Uri.parse(downloadUrlOfImage);
-            DownloadManager.Request request = new DownloadManager.Request(downloadUri);
-            request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI | DownloadManager.Request.NETWORK_MOBILE)
-                    .setAllowedOverRoaming(false)
-                    .setTitle(filename)
-                    .setMimeType("image/jpeg") // Your file type. You can use this code to download other file types also.
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_PICTURES, File.separator + filename + ".jpg");
-            dm.enqueue(request);
-            Toast.makeText(this, "Image download started.", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e("Error downloadImageNew", e.toString());
-            Toast.makeText(this, "Image download failed.", Toast.LENGTH_SHORT).show();
-
-            throw e;
-        }
-    }
 
     protected static File screenshot(View view, String filename) {
 
@@ -1352,26 +1136,19 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    @Override
-    public void onPause() {
-        isInBackGround = true;
-        TimeStamp = Calendar.getInstance().getTimeInMillis();
-        super.onPause();
-    }
 
     @Override
     public void onStop() {
 
-        if (cookieSyncOn) {
-            Log.i(TAG, "Cookies sync cancelled");
-            cookieSyncHandler.removeCallbacks(cookieSyncRunnable);
-            onResumeCalled = false;
-        }
-        if (Config.CLEAR_CACHE_ON_EXIT) {
-            webView.clearCache(true);
-            CookieManager.getInstance().removeAllCookies(null);
-            CookieManager.getInstance().flush();
-        }
+//        if (cookieSyncOn) {
+//            Log.i(TAG, "Cookies sync cancelled");
+//            cookieSyncHandler.removeCallbacks(cookieSyncRunnable);
+//        }
+//        if (Config.CLEAR_CACHE_ON_EXIT) {
+//            webView.clearCache(true);
+//            CookieManager.getInstance().removeAllCookies(null);
+//            CookieManager.getInstance().flush();
+//        }
 
 
         super.onStop();
@@ -1380,51 +1157,46 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
 
-        if (Config.AUTO_REFRESH_ENABLED) {
-            webView.reload();
-        }
+//        if (Config.AUTO_REFRESH_ENABLED) {
+//            webView.reload();
+//        }
         // Manual Cookie Sync Tool
-        if (Config.MANUAL_COOKIE_SYNC && !onResumeCalled) {
-
-            // Check if the page requires manual cookie syncing
-            boolean syncCookies = false;
-            String url = webView.getUrl();
-            int nbTriggers = Config.MANUAL_COOKIE_SYNC_TRIGGERS.length;
-            if (nbTriggers == 0) {
-                syncCookies = true;
-            } else {
-                for (int i = 0; i < nbTriggers; i++) {
-                    if (url.startsWith(Config.MANUAL_COOKIE_SYNC_TRIGGERS[i])) {
-                        syncCookies = true;
-                        break;
-                    }
-                }
-            }
-
-            // Manually sync cookies so that there is no 30 second delay
-            if (syncCookies) {
-                cookieSyncOn = true;
-                Log.i(TAG, "Cookies sync on");
-                cookieSyncHandler.postDelayed(cookieSyncRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                            CookieManager.getInstance().flush();
-                            Log.i(TAG, "Cookies flushed");
-                            cookieSyncHandler.postDelayed(cookieSyncRunnable, Config.COOKIE_SYNC_TIME);
-                        }
-                    }
-                }, Config.COOKIE_SYNC_TIME);
-            }
-
-            // Ensures consistent timing
-            onResumeCalled = true;
-        }
+//        if (Config.MANUAL_COOKIE_SYNC) {
+//
+//            // Check if the page requires manual cookie syncing
+//            boolean syncCookies = false;
+//            String url = webView.getUrl();
+//            int nbTriggers = Config.MANUAL_COOKIE_SYNC_TRIGGERS.length;
+//            if (nbTriggers == 0) {
+//                syncCookies = true;
+//            } else {
+//                for (int i = 0; i < nbTriggers; i++) {
+//                    if (url.startsWith(Config.MANUAL_COOKIE_SYNC_TRIGGERS[i])) {
+//                        syncCookies = true;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            // Manually sync cookies so that there is no 30 second delay
+//            if (syncCookies) {
+//                Log.i(TAG, "Cookies sync on");
+//                cookieSyncHandler.postDelayed(cookieSyncRunnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+//                            CookieManager.getInstance().flush();
+//                            Log.i(TAG, "Cookies flushed");
+//                            cookieSyncHandler.postDelayed(cookieSyncRunnable, Config.COOKIE_SYNC_TIME);
+//                        }
+//                    }
+//                }, Config.COOKIE_SYNC_TIME);
+//            }
+//
+//            // Ensures consistent timing
+//        }
 
         super.onResume();
-
-        isInBackGround = false;
-        TimeStamp = Calendar.getInstance().getTimeInMillis();
 
 
     }
@@ -1432,11 +1204,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
 
-        if (Config.CLEAR_CACHE_ON_EXIT) {
-            webView.clearCache(true);
-            CookieManager.getInstance().removeAllCookies(null);
-            CookieManager.getInstance().flush();
-        }
+//        if (Config.CLEAR_CACHE_ON_EXIT) {
+//            webView.clearCache(true);
+//            CookieManager.getInstance().removeAllCookies(null);
+//            CookieManager.getInstance().flush();
+//        }
 
 
         super.onDestroy();
@@ -1819,10 +1591,10 @@ public class MainActivity extends AppCompatActivity {
                             "}";
                     view.loadUrl(disableLinkDragScript);
                 }
-                if (SPLASH_SCREEN_ACTIVATED && SPLASH_SCREEN_ACTIVE && (SplashScreen.getInstance() != null) && REMAIN_SPLASH_OPTION) {
-                    SplashScreen.getInstance().finish();
-                    SPLASH_SCREEN_ACTIVE = false;
-                }
+//                if (SPLASH_SCREEN_ACTIVATED && SPLASH_SCREEN_ACTIVE && (SplashScreen.getInstance() != null) && REMAIN_SPLASH_OPTION) {
+//                    SplashScreen.getInstance().finish();
+//                    SPLASH_SCREEN_ACTIVE = false;
+//                }
                 super.onPageFinished(view, url);
             }
         }
@@ -2167,9 +1939,7 @@ public class MainActivity extends AppCompatActivity {
             scanningModeOn = true;
             layout.screenBrightness = 1F;
             getWindow().setAttributes(layout);
-            if (!PREVENT_SLEEP) {
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            }
+
         }
     }
 
@@ -2181,9 +1951,7 @@ public class MainActivity extends AppCompatActivity {
             scanningModeOn = false;
             layout.screenBrightness = previousScreenBrightness;
             getWindow().setAttributes(layout);
-            if (!PREVENT_SLEEP) {
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            }
+
         }
     }
 
@@ -2418,68 +2186,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void downloadFile(String url) {
-        try {
-            String fileName = getFileNameFromURL(url);
-            Toast.makeText(MainActivity.this, "Downloading file...", Toast.LENGTH_SHORT).show();
-            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            String cookie = CookieManager.getInstance().getCookie(url);
-            request.addRequestHeader("Cookie", cookie);
-            request.allowScanningByMediaScanner();
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
-            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-            dm.enqueue(request);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
 
-
-        BroadcastReceiver onComplete = new BroadcastReceiver() {
-
-            public void onReceive(Context ctxt, Intent intent) {
-                String action = intent.getAction();
-                if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-                    long downloadId = intent.getLongExtra(
-                            DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-                    openDownloadedAttachment(MainActivity.this, downloadId);
-                }
-            }
-        };
-        registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-    }
-
-    public static String getFileNameFromURL(String url) {
-        if (url == null) {
-            return "";
-        }
-        try {
-            URL resource = new URL(url);
-            String host = resource.getHost();
-            if (host.length() > 0 && url.endsWith(host)) {
-                return "";
-            }
-        } catch (MalformedURLException e) {
-            return "";
-        }
-
-        int startIndex = url.lastIndexOf('/') + 1;
-        int length = url.length();
-
-
-        int lastQMPos = url.lastIndexOf('?');
-        if (lastQMPos == -1) {
-            lastQMPos = length;
-        }
-
-        int lastHashPos = url.lastIndexOf('#');
-        if (lastHashPos == -1) {
-            lastHashPos = length;
-        }
-
-        int endIndex = Math.min(lastQMPos, lastHashPos);
-        return url.substring(startIndex, endIndex);
-    }
 
     private class CustomeGestureDetector extends GestureDetector.SimpleOnGestureListener {
         @Override
@@ -2930,19 +2637,6 @@ public class MainActivity extends AppCompatActivity {
 
     // nfc
 
-    private void initNfc() {
-        nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if (nfcAdapter == null) {
-            Toast.makeText(this, "This device doesn't support NFC.", Toast.LENGTH_LONG).show();
-            finish();
-        } else {
-            readFromIntent(getIntent());
-            pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE);
-            IntentFilter tagDetected = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
-            tagDetected.addCategory(Intent.CATEGORY_DEFAULT);
-            writeTagFilters = new IntentFilter[]{tagDetected};
-        }
-    }
 
 
     private void readFromIntent(Intent intent) {
@@ -3076,37 +2770,6 @@ public class MainActivity extends AppCompatActivity {
         return recordNFC;
     }
 
-    private String getDeepLinkingURL(Intent intent) {
-        if (intent.getData() != null
-                && (intent.getData().getScheme().equals("http") || intent.getData().getScheme().equals("https"))) {
-            Uri data = intent.getData();
-
-            List<String> pathSegments = data.getPathSegments();
-            if (pathSegments.size() > 0) {
-                String hostOfLink = data.getHost();
-
-                // Validate the host against expected value (e.g., your app's host)
-                if (hostOfLink.contains(Config.HOST)) {
-                    String localDeepLinkingURL;
-
-                    // Reconstruct the URL for WebView
-                    localDeepLinkingURL = data.getScheme() + "://" + data.getHost() + data.getPath();
-
-                    String normalizeString = data.normalizeScheme().toString();
-                    if (normalizeString.length() == localDeepLinkingURL.length()) {
-                        localDeepLinkingURL = sanitizeURL(localDeepLinkingURL);
-                    } else {
-                        localDeepLinkingURL = normalizeString;
-                    }
-
-                    Log.e(TAG, "getDeepLinkingURL: " + localDeepLinkingURL);
-
-                    return localDeepLinkingURL;
-                }
-            }
-        }
-        return null;
-    }
 
     // Sanitize URL to prevent XSS
     private String sanitizeURL(String url) {
@@ -3178,44 +2841,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void WriteModeOn() {
-        nfcAdapter.enableForegroundDispatch(this, pendingIntent, writeTagFilters, null);
-    }
-
-    private void WriteModeOff() {
-        nfcAdapter.disableForegroundDispatch(this);
-    }
 
     private void toast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    public void ExitDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-
-        builder.setMessage(getResources().getString(R.string.exit_app_dialog))
-                .setCancelable(false)
-                .setPositiveButton(getResources().getString(R.string.yes), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        MainActivity.this.finish();
-                    }
-                })
-                .setNegativeButton(getResources().getString(R.string.no), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-
-        AlertDialog alert = builder.create();
-        alert.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.RED);
-                alert.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(Color.BLACK);
-            }
-        });
-        alert.show();
-    }
 
 
     private void setOfflineScreenBackgroundColor() {

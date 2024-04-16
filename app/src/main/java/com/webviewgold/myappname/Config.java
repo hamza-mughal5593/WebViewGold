@@ -20,7 +20,8 @@ public class Config {
     public static final String HOST = "www.example.org";
 
     // Your URL including https:// or http:// prefix and including www. or any required subdomain (e.g., "https://www.example.org")
-    public static String HOME_URL = "https://dash-act.staging-dot-perkchops-010323.com/";
+//    public static String HOME_URL = "https://dash-act.staging-dot-perkchops-010323.com/";
+    public static String HOME_URL = "https://perkchopsdashboard.com/";
 
     // Set to "false" to disable the progress spinner/loading spinner
     public static final boolean ACTIVATE_PROGRESS_BAR = true;
@@ -38,7 +39,7 @@ public class Config {
     public static final boolean APPEND_LANG_CODE = false;
 
     // Set this to true if you want the WebView to automatically refresh its contents when the app comes back to the foreground from the background
-    public static final boolean AUTO_REFRESH_ENABLED = false;
+    public static final boolean AUTO_REFRESH_ENABLED = true;
 
     // Set to "true" if you want to use the "local-html" folder fallback if the user is offline
     public static final boolean FALLBACK_USE_LOCAL_HTML_FOLDER_IF_OFFLINE = false;
@@ -72,7 +73,6 @@ public class Config {
     public static final boolean OPEN_NOTIFICATION_URLS_IN_SYSTEM_BROWSER = false;
 
     // Set to "true" to activate the splash screen
-    public static final boolean SPLASH_SCREEN_ACTIVATED = true;
 
     //Set the splash screen timeout time in milliseconds (the loading sign screen will show after this time duration if the home URL still has some loading to do)
     public static final int SPLASH_TIMEOUT = 1300;
@@ -87,7 +87,6 @@ public class Config {
     static boolean blackStatusBarText = false;
 
     //Set to "true" to prevent the device from going into sleep while the app is active
-    public static final boolean PREVENT_SLEEP = false;
 
     //Set to "true" to enable navigation by swiping left or right to move back or forward a page
     public static final boolean ENABLE_SWIPE_NAVIGATE = false;
