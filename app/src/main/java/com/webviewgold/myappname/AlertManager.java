@@ -75,10 +75,6 @@ class AlertManager {
 
     }
 
-    private static SharedPreferences getPurchasePreferences(Context context) {
-        return context.getSharedPreferences(PURCHASE_PREFS, Context.MODE_PRIVATE);
-
-    }
 
 
 
@@ -87,16 +83,6 @@ class AlertManager {
         return prefs.getString("FirebaseToken", defValue);
     }
 
-    public static void purchaseState(Context context,boolean purchased) {
-        SharedPreferences.Editor editor = getPurchasePreferences(context).edit();
-        editor.putBoolean(PURCHASED, purchased).apply();
-    }
-
-    public static boolean isPurchased(Context context) {
-        return getPurchasePreferences(context).getBoolean(PURCHASED, false);
-
-
-    }
 
     private static void showFirstLaunchDialog(final Context context) {
         new androidx.appcompat.app.AlertDialog.Builder(context, android.R.style.Theme_DeviceDefault_Light_Dialog_NoActionBar)

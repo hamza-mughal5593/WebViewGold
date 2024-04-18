@@ -103,10 +103,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 
 
 import java.io.BufferedReader;
@@ -186,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
     private ValueCallback<Uri[]> mUMA;
     private final static int FCR = 1;
     public String hostpart;
-    private boolean isConsumable = false;
     private boolean offlineFileLoaded = false;
     private boolean isNotificationURL = false;
     private boolean extendediap = true;
@@ -616,33 +612,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        final WebView.HitTestResult webViewHitTestResult = webView.getHitTestResult();
 
-        if (webViewHitTestResult.getType() == WebView.HitTestResult.IMAGE_TYPE ||
-                webViewHitTestResult.getType() == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
 
-            if (Config.ALLOW_IMAGE_DOWNLOAD) {
-                menu.setHeaderTitle("Download images");
-                menu.add(0, 1, 0, "Download the image")
-                        .setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                            @Override
-                            public boolean onMenuItemClick(MenuItem menuItem) {
-                                String DownloadImageURL = webViewHitTestResult.getExtra();
-                                if (URLUtil.isValidUrl(DownloadImageURL)) {
-                                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(DownloadImageURL));
-                                    request.allowScanningByMediaScanner();
-                                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                                    DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                                    downloadManager.enqueue(request);
-                                    Toast.makeText(MainActivity.this, "Image downloaded successfully.", Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(MainActivity.this, "Sorry...something went wrong.", Toast.LENGTH_LONG).show();
-                                }
-                                return false;
-                            }
-                        });
-            }
-        }
     }
 
     public ValueCallback<Uri[]> uploadMessage;
@@ -1217,31 +1188,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    protected boolean checkPlayServices() {
-        final int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(MainActivity.this);
-        if (resultCode != ConnectionResult.SUCCESS) {
-            if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                Dialog dialog = GooglePlayServicesUtil.getErrorDialog(resultCode, MainActivity.this,
-                        1001);
-                if (dialog != null) {
-                    dialog.show();
-                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        public void onDismiss(DialogInterface dialog) {
-                            if (ConnectionResult.SERVICE_INVALID == resultCode) {
-
-                            }
-                        }
-                    });
-                    return false;
-                }
-            }
-            Toast.makeText(this, "See https://tinyurl.com/iap-fix | In-App Purchase failed.", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        return true;
-    }
-
-
 
 
 
@@ -1632,17 +1578,14 @@ public class MainActivity extends AppCompatActivity {
                             || url.startsWith("inappsubscription://")) {
 
                         if (extendediap) {
-                            Log.i(TAG, "play " + checkPlayServices());
                             Log.i(TAG, "InApp URL: " + url);
-                            if (checkPlayServices() ) {
-                                isConsumable = url.contains("consumable=true");
-                            } else {
+
                                 Log.i(TAG, " toast ");
                                 String iaptext1 = "U2VlIGh0dHBzOi8vdGlueXVybC5jb20vaWFwLWZpeCB8IEluLUFwcCBQdXJjaGFzZSBmYWlsZWQu";
                                 byte[] iapdata1 = Base64.decode(iaptext1, Base64.DEFAULT);
                                 String iapdata1final = new String(iapdata1, StandardCharsets.UTF_8);
                                 Toast.makeText(MainActivity.this, iapdata1final, Toast.LENGTH_SHORT).show();
-                            }
+
                             return true;
                         } else {
                             String iaptext2 = "U2VlIGh0dHBzOi8vdGlueXVybC5jb20vaWFwLWZpeCB8IEluLUFwcCBQdXJjaGFzZSBmYWlsZWQu";

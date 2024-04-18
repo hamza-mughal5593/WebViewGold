@@ -38,9 +38,6 @@ public class Config {
     // Set to "true" if you want to extend URL request by the system language like ?webview_language=LANGUAGE CODE (e.g., ?webview_language=EN for English users)
     public static final boolean APPEND_LANG_CODE = false;
 
-    // Set this to true if you want the WebView to automatically refresh its contents when the app comes back to the foreground from the background
-    public static final boolean AUTO_REFRESH_ENABLED = true;
-
     // Set to "true" if you want to use the "local-html" folder fallback if the user is offline
     public static final boolean FALLBACK_USE_LOCAL_HTML_FOLDER_IF_OFFLINE = false;
 
@@ -156,24 +153,18 @@ public class Config {
     public static final int FACEBOOK_DAYS_UNTIL_PROMPT = 2;
     // Set the minimum number of application launches before the "Rate this app" dialog will be displayed
     public static final int FACEBOOK_LAUNCHES_UNTIL_PROMPT = 4;
-    // Set the URL of your Facebook page
-    public static final String FACEBOOK_URL = "https://www.facebook.com/OnlineAppCreator/";
-
-    // Set to "false" to prevent the "Download images" pop-up box from appearing when long-pressing on an image
-    public static final boolean ALLOW_IMAGE_DOWNLOAD = true;
 
 
 
 
 
-    //X website clicks for AdMob interstitial ads (set the AdMob IDs in the strings.xml file)
-    public static final int SHOW_AD_AFTER_X = 5;
+
+
 
     //Allow normal URL clicks to increment SHOW_AD_AFTER_X
     public static final boolean INCREMENT_WITH_REDIRECTS = true;
 
-    //Set to "true" to use Facebook ads instead of AdMob ads (set the Ad IDs in the strings.xml file)
-    public static boolean USE_FACEBOOK_ADS = false;
+
 
     //Add the file formats that should trigger the file downloader functionality
     public static List<String> downloadableExtension =
@@ -198,20 +189,6 @@ public class Config {
     //Define the URL for logout to clear login cookies (optional)
     public static String HOME_URL_LOGOUT = "https://www.example.com/logout";
 
-    /**
-     * Manual Cookie Sync Tool
-     *
-     * Note: To be used if you require cookies to be synced UNDER every 30 seconds
-     */
 
-    //Set to "true" to enable the Manual Cookie Sync tool
-    public static final boolean MANUAL_COOKIE_SYNC = false;
-
-    // Define how often the cookies should sync with the app in milliseconds (ms)
-    public static final int COOKIE_SYNC_TIME = 5000;
-
-    // Define the URL prefixes you want to use the Manual Cookie Sync tool on
-    // Note: If MANUAL_COOKIE_SYNC_TRIGGERS is empty, it will automatically check every page
-    public static String[] MANUAL_COOKIE_SYNC_TRIGGERS = {}; //Example: {"https://example.com/login", "https://example.com/data"}
 
 }
