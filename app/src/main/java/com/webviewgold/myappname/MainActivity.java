@@ -18,6 +18,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.LabeledIntent;
@@ -152,6 +153,12 @@ import static com.webviewgold.myappname.Config.REMAIN_SPLASH_OPTION;
 import static com.webviewgold.myappname.Config.SPECIAL_LINK_HANDLING_OPTIONS;
 import static com.webviewgold.myappname.Config.downloadableExtension;
 
+import com.google.android.gms.tasks.Task;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.UpdateAvailability;
 import com.webviewgold.myappname.R;
 public class MainActivity extends AppCompatActivity {
 
@@ -1166,12 +1173,29 @@ public class MainActivity extends AppCompatActivity {
 //
 //            // Ensures consistent timing
 //        }
-
+        inAppUpdateTranslator();
         super.onResume();
 
 
     }
+    private void inAppUpdateTranslator() {
+        AppUpdateManager appUpdateManagerForTrans = AppUpdateManagerFactory.create(MainActivity.this);
+        Task<AppUpdateInfo> appUpdateInfoTaskForTrans = appUpdateManagerForTrans.getAppUpdateInfo();
+        appUpdateInfoTaskForTrans.addOnSuccessListener(appUpdateInfo -> {
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
 
+                try {
+                    appUpdateManagerForTrans.startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE
+                            , MainActivity.this, 101);
+                } catch (IntentSender.SendIntentException e) {
+                    e.printStackTrace();
+
+//                    Log.d(TAG,"callInAppUpdate:"+e.getMessage());
+                }
+            }
+        });
+    }
     @Override
     public void onDestroy() {
 
